@@ -61,7 +61,7 @@ public partial class MainWindow : Window
         {
             var LocalPath = result[0].Path.AbsolutePath;
             Main_Window.Title = result[0].Name;
-            LoadFile(LocalPath);
+            LoadFile(LocalPath.Replace("%20"," "));
         }
     }
     private void UpdateCanvas(char[][] drawData)

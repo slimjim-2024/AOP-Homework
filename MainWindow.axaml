@@ -10,7 +10,7 @@
         <StackPanel>
             <TextBlock x:Name="MessageBox" Foreground="Black"/>
             <Canvas x:Name="Canvas" PointerPressed="Canvas_PointerPressed"/>
-            <Button Content="Hello" Click="Load" Background="DimGray"/>
+            <Button Content="Load File" Click="Load" Background="DimGray"/>
             <Button Content="Hello2" Click="Button_Click" Background="DimGray"/>
         </StackPanel>
 </Window>
