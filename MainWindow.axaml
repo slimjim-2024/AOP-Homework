@@ -8,9 +8,11 @@
         x:Name="Main_Window">
         
         <StackPanel>
-            <TextBlock x:Name="MessageBox" Foreground="Black"/>
             <Canvas x:Name="Canvas" PointerPressed="Canvas_PointerPressed"/>
-            <Button Content="Load File" Click="Load" Background="DimGray"/>
-            <Button Content="Hello2" Click="Button_Click" Background="DimGray"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button Content="Load File" Click="Load" Background="DimGray" HotKey="Ctrl+o"/>
+                <Button Content="Save File" Click="Save" Background="DimGray" HotKey="Ctrl+s"/>
+            </StackPanel>
+            <ColorPicker x:Name="ColorPicker" HorizontalAlignment="Center" Background="Black" Foreground="FloralWhite"/>
         </StackPanel>
 </Window>

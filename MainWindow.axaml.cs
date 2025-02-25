@@ -12,22 +12,43 @@ namespace AOP_Homework;
 
 public partial class MainWindow : Window
 {
-    string? openedFile = "AOP_Hork";
-    int height;
+    int height;     // Stores the dimensions of the grid (height and width)
     int width;
     private char[][] data;
+    private bool editsPending = false;
 
     public MainWindow()
     {
         InitializeComponent();
         Main_Window.Title = "No file opened";
-        Canvas.Width = 800;
-        Canvas.Height = 600;
+        Canvas.Width = 400;
+        Canvas.Height = 300;
         Canvas.Background = Brushes.White;
     }
-    private void Button_Click(object sender, RoutedEventArgs e)
+    private async void Save(object sender, RoutedEventArgs e)
     {
-        MessageBox.Text = "Hello, Avalonia!";
+        var result = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Open a b2img.txt file",
+            FileTypeChoices = new List<FilePickerFileType>
+            {
+                new FilePickerFileType("b2img.txt files")
+                {
+                    Patterns = new[] { "*.b2img.txt" }
+                }
+            },
+            DefaultExtension=".b2img.txt",
+            SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory),
+            SuggestedFileName = Main_Window.Title,
+            ShowOverwritePrompt = true
+        });
+
+        if (result != null)
+        {
+            var LocalPath = result.Path.AbsolutePath;
+            Main_Window.Title = result.Name;
+            SaveFile(LocalPath.Replace("%20"," "));
+        }
     }
     private void Canvas_PointerPressed(object sender, PointerPressedEventArgs e)
     {
@@ -53,7 +74,7 @@ public partial class MainWindow : Window
                 }
             },
             SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory),
-            SuggestedFileName = openedFile,
+            SuggestedFileName = Main_Window.Title,
             AllowMultiple = false
         });
 
@@ -85,6 +106,7 @@ public partial class MainWindow : Window
 
             }
         }
+        editsPending=true;
     }
     private void LoadFile(string file)
     {
@@ -107,5 +129,20 @@ public partial class MainWindow : Window
         }
         sr.Close();
         UpdateCanvas(data);
+        editsPending=false;
+    }
+    protected internal void SaveFile(string file)
+    {
+        using StreamWriter sw = new StreamWriter(file);
+        sw.WriteLine($"{height} {width}");
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                sw.Write(data[i][j]);
+            }
+        }
+        sw.Close();
+        editsPending=false;
     }
 }
