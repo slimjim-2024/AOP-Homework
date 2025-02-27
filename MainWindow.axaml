@@ -8,7 +8,8 @@
         Background="AliceBlue"
         x:Class="AOP_Homework.MainWindow"
         x:Name="Main_Window"
-        x:DataType="local:ColorPickerViewModel">
+        x:DataType="local:ColorPickerViewModel"
+        >
         <Window.DataContext>
             <local:ColorPickerViewModel/>
         </Window.DataContext>
@@ -19,10 +20,11 @@
             <Button Content="Load File" Click="Load" Background="DimGray" HotKey="Ctrl+o" Padding="10" Margin="0, 10"/>
             <Button Content="Save File" Click="Save" Background="DimGray" HotKey="Ctrl+s" Padding="10" Margin="0, 10"/>
         </StackPanel>
-        <ComboBox Name="ColorList" ItemsSource="{Binding CustomColors}" HorizontalAlignment="Center">
+        <ComboBox Name="ColorList" ItemsSource="{Binding CustomColors}" Foreground="Black"
+         SelectedIndex="1" Margin="0 5" HorizontalAlignment="Center" >
             <ComboBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Name}" Foreground="Black"/>
+                <DataTemplate DataType="{x:Type local:NamedColor}">
+                    <TextBlock Text="{Binding Name}" Foreground="{Binding Value}"/>
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>

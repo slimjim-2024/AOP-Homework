@@ -13,6 +13,7 @@ public partial class ColorPickerViewModel : ObservableObject
 {
     
     public bool editsPending;  // Flag to check if there are any unsaved changes
+    [ObservableProperty]
     private static string[] colorCodes = [
     "#FFFFFF", // White
     "#000000", // Black
@@ -33,19 +34,19 @@ public partial class ColorPickerViewModel : ObservableObject
 ];
 
     [ObservableProperty]
-    private ObservableCollection<NamedColor> _customColors;    
+    private List<NamedColor> _customColors;    
     // private ObservableCollection<string> _customColors;    
         
 
 // public ObservableCollection<Color> CustomPalette { get; set; } = new ObservableCollection<Color>(customColors);
     // [RelayCommand]
     public ColorPickerViewModel(){
-        CustomColors = new ObservableCollection<NamedColor> (colorCodes.Select(colorCode =>
+        CustomColors = new List<NamedColor> (colorCodes.Select(colorCode =>
         {
             Debug.WriteLine("" + colorCode);
-            return new NamedColor{Name = colorCode, Value = Color.Parse(colorCode)};
+            return new NamedColor{Name = colorCode, Value = Brush.Parse(colorCode)};
         }
-        ).OrderBy(x=> x.Name));
+        ));
         // CustomColors = new ObservableCollection<string>(colorCodes);
     }
 

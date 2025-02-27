@@ -8,7 +8,7 @@ public partial class NamedColor : ObservableObject{
 [ObservableProperty]
     private string _name;
     [ObservableProperty]
-    private Color _value;
+    private IBrush _value;
 
 
     // public string Name

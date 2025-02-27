@@ -31,6 +31,7 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
         DataContext = _viewModel;
         // comboBox.ItemsSource = _viewModel.CustomColors;
         // comboBox.SelectedIndex = 3;
+        // ColorList.ItemsSource = new string[] { "a", "s", "d",};
         foreach(var item in ColorList.Items) Debug.WriteLine(item.ToString() + "Gotten FRom the list");
         Main_Window.Title = "No file opened";
         Canvas.Width = 400;
@@ -104,7 +105,7 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
         int y = (int)point.Y / heightMultiplier;    // Calculate grid row
         if (x < width && y < height)
         {
-            data[y][x] = data[y][x] != 1 ? 1 : 0;   // Toggle between '0' and '1'
+            data[y][x] = data[y][x] == 0 ? ColorList.SelectedIndex : 0;   // Toggle between '0' and '1'
             UpdateCanvas(data);      // Redraw the canvas with updated data
         }
     }
@@ -119,7 +120,7 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
                 Rectangle rect = new Rectangle();   // Create a new rectangle to represent a grid cell
                 rect.Width = widthMultiplier;   // Set the width of the rectangle
                 rect.Height = widthMultiplier;  // Set the height of the rectangle
-                rect.Fill = new SolidColorBrush(_viewModel.CustomColors[drawData[i][j]].Value);    // Set the fill color of the rectangle
+                rect.Fill = _viewModel.CustomColors[drawData[i][j]].Value;    // Set the fill color of the rectangle
                 Canvas.SetLeft(rect, j * widthMultiplier);
                 Canvas.SetTop(rect, i * heightMultiplier);
                 Canvas.Children.Add(rect); // Add the rectangle to the canvas
