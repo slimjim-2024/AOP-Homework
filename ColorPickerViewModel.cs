@@ -1,46 +1,50 @@
 using Avalonia.Media;
+using CommunityToolkit.Mvvm.ComponentModel;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 
 namespace AOP_Homework;
 
-public class ColorPickerViewModel : INotifyPropertyChanged
+public partial class ColorPickerViewModel : ObservableObject
 {
-    private static readonly Color[] customColors = {
-        Colors.White,
-        Colors.Black,
-        Colors.Red,
-        Colors.Cyan,
-        Colors.Green,
-        Colors.Magenta,
-        Colors.Blue,
-        Colors.Yellow,
-        Colors.Orange,
-        Colors.Teal,
-        Colors.Purple,
-        Colors.Lime,
-        Colors.Pink,
-        Colors.Navy,
-        Colors.Brown,
-        Colors.SkyBlue
-    };
+    
+    public bool editsPending;  // Flag to check if there are any unsaved changes
+    private static string[] colorCodes = [
+    "#FFFFFF", // White
+    "#000000", // Black
+    "#FF0000", // Red
+    "#00FFFF", // Cyan
+    "#00FF00", // Green
+    "#FF00FF", // Magenta
+    "#0000FF", // Blue
+    "#FFFF00", // Yellow
+    "#FFA500", // Orange
+    "#008080", // Teal
+    "#800080", // Purple
+    "#00FF00", // Lime
+    "#FFC0CB", // Pink
+    "#000080", // Navy
+    "#A52A2A", // Brown
+    "#87CEEB"  // Sky Blue
+];
 
-public ObservableCollection<Color> CustomPalette { get; set; } = new ObservableCollection<Color>(customColors);
+    // [ObservableProperty]
+    private ObservableCollection<NamedColor> _customColors;
 
-    private Color _selectedColor;
-    public Color SelectedColor
+    public ObservableCollection<NamedColor> customColors
     {
-        get => _selectedColor;
-        set
-        {
-            _selectedColor = value;
-            OnPropertyChanged(nameof(SelectedColor));
-        }
+        get => _customColors; 
+        set { SetProperty(ref _customColors, value); }
+    }
+    
+    
+
+// public ObservableCollection<Color> CustomPalette { get; set; } = new ObservableCollection<Color>(customColors);
+    public ColorPickerViewModel(){
+        customColors = new ObservableCollection<NamedColor> (colorCodes.Select(colorCode => 
+        new NamedColor{Name = colorCode, Value = Color.Parse(colorCode)}));
     }
 
-    public event PropertyChangedEventHandler PropertyChanged;
-    protected virtual void OnPropertyChanged(string propertyName)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
 }

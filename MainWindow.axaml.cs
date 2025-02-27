@@ -14,43 +14,27 @@ namespace AOP_Homework;
 
 public partial class MainWindow : Window
 {
-    private readonly ColorPickerViewModel _viewModel;
-    int height;     // Stores the dimensions of the grid (height and width)
-    int width;
-    private int[][] data;
-    private bool editsPending = false;
-    private string[] colorCodes = {
-    "#FFFFFF", // White
-    "#000000", // Black
-    "#FF0000", // Red
-    "#00FFFF", // Cyan
-    "#00FF00", // Green
-    "#FF00FF", // Magenta
-    "#0000FF", // Blue
-    "#FFFF00", // Yellow
-    "#FFA500", // Orange
-    "#008080", // Teal
-    "#800080", // Purple
-    "#00FF00", // Lime
-    "#FFC0CB", // Pink
-    "#000080", // Navy
-    "#A52A2A", // Brown
-    "#87CEEB"  // Sky Blue
-};
-bool IsColor = false;
-int heightMultiplier=50, widthMultiplier=50;
+    ListBox listBox;
+    private ColorPickerViewModel _viewModel;
+    int height; // Stores the dimensions of the grid (height)
+    int width;  // Stores the dimensions of the grid (width)
+    private int[][] data;    // 2D array to store the grid data (binary or color)
+bool IsColor = false;    // Determines if the file uses a color palette
+int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pixels
 
 
     public MainWindow()
     {
         InitializeComponent();
         _viewModel = new ColorPickerViewModel();
+        listBox = this.Find<ListBox>("ColorList");
         DataContext = _viewModel;
         Main_Window.Title = "No file opened";
         Canvas.Width = 400;
         Canvas.Height = 300;
         Canvas.Background = Brushes.White;
     }
+    //save the file
     private async void Save(object sender, RoutedEventArgs e)
     {
         var result = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
@@ -60,22 +44,27 @@ int heightMultiplier=50, widthMultiplier=50;
             {
                 new FilePickerFileType("b2img.txt files")
                 {
-                    Patterns = new[] { "*.b2img.txt", "*.b2img" },
+                    Patterns = new[] { "*.b2img.txt", "*.b2img" },   // Add the .b2img extension
+                },
+                new FilePickerFileType("b16img.txt files")
+                {
+                    Patterns = new[]{"*.b16img.txt"}
                 }
             },
             DefaultExtension=".b2img.txt",
             SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory),
             SuggestedFileName = Main_Window.Title,
-            ShowOverwritePrompt = true
+            ShowOverwritePrompt = true  // Show a prompt if the file already exists
         });
 
         if (result != null)
         {
             var LocalPath = result.Path.AbsolutePath;
             Main_Window.Title = result.Name;
-            SaveFile(LocalPath.Replace("%20"," "));
+            SaveFile(LocalPath.Replace("%20"," ")); // Save the file and replacing "%20" with spaces
         }
     }
+    //open the file
     private async void Load(object sender, RoutedEventArgs e)
     {
         IReadOnlyList<IStorageFile> result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -83,115 +72,65 @@ int heightMultiplier=50, widthMultiplier=50;
             Title = "Open a b2img.txt file",
             FileTypeFilter = new List<FilePickerFileType>
             {
-                new FilePickerFileType("b2img.txt files")
+                new FilePickerFileType("b2img.txt files")   //chose the file that stores 2 color data
                 {
-                    Patterns = ["*.b2img.txt"]
+                    Patterns = ["*.b2img.txt"] 
                 },
-                new FilePickerFileType("b16img.txt color files")
+                new FilePickerFileType("b16img.txt color files")    //chose the file that stores 16 color data
                 {
                     Patterns = ["*.b16img.txt"]
                 }
             },
-            SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory),
+            SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory), // Open the file dialog in the current directory
             SuggestedFileName = Main_Window.Title,
-            AllowMultiple = false
+            AllowMultiple = false   // Allow only one file to be selected
         });
 
-        if (result != null && result.Count > 0)
+        if (result != null && result.Count > 0) 
         {
-            var LocalPath = result[0].Path.AbsolutePath;
-            Main_Window.Title = result[0].Name;
-            IsColor = result[0].Name.Contains("b16img.txt");
-            LoadFile(LocalPath.Replace("%20"," "));
+            var LocalPath = result[0].Path.AbsolutePath;    // Get the path of the selected file
+            Main_Window.Title = result[0].Name; // Set the title of the window to the name of the file
+            IsColor = result[0].Name.Contains("b16img.txt");    // Check if the file uses a color palette
+            LoadFile(LocalPath.Replace("%20", " ")); // Load the file and replacing "%20" with spaces
         }
     }
     private void Canvas_PointerPressed(object sender, PointerPressedEventArgs e)
     {
-        var point = e.GetPosition(Canvas);
-        int x = (int)point.X / widthMultiplier;
-        int y = (int)point.Y / heightMultiplier;
+        var point = e.GetPosition(Canvas);  // Get the position of the pointer
+        int x = (int)point.X / widthMultiplier;     // Calculate grid columm
+        int y = (int)point.Y / heightMultiplier;    // Calculate grid row
         if (x < width && y < height)
         {
-            data[y][x] = data[y][x] != 1 ? 1 : 0;
-            UpdateCanvas(data);
+            data[y][x] = data[y][x] != 1 ? 1 : 0;   // Toggle between '0' and '1'
+            UpdateCanvas(data);      // Redraw the canvas with updated data
         }
     }
+     // Redraws the grid on the canvas using the stored data
     private void DrawCanvas(int[][] drawData)
     {
         // if (IsColor){
-        for (int i = 0; i < height; i++)
+        for (int i = 0; i < height; i++)    // Loop through each row
         {
-            for (int j = 0; j < width; j++)
+            for (int j = 0; j < width; j++) // Loop through each column
             {
-                Rectangle rect = new Rectangle();
-                rect.Width = widthMultiplier;
-                rect.Height = widthMultiplier;
-                rect.Fill = Brush.Parse(colorCodes[drawData[i][j]]);
+                Rectangle rect = new Rectangle();   // Create a new rectangle to represent a grid cell
+                rect.Width = widthMultiplier;   // Set the width of the rectangle
+                rect.Height = widthMultiplier;  // Set the height of the rectangle
+                rect.Fill = new SolidColorBrush(_viewModel.customColors[drawData[i][j]].Value);    // Set the fill color of the rectangle
                 Canvas.SetLeft(rect, j * widthMultiplier);
                 Canvas.SetTop(rect, i * heightMultiplier);
-                Canvas.Children.Add(rect);
+                Canvas.Children.Add(rect); // Add the rectangle to the canvas
 
             }
         }
-        // }
-        // else {
-        //     for (int i = 0; i < height; i++)
-        // {
-        //     for (int j = 0; j < width; j++)
-        //     {
-        //         Rectangle rect = new Rectangle();
-        //         rect.Width = widthMultiplier;
-        //         rect.Height = heightMultiplier;
-        //         rect.Fill = Brush.Parse(colorCodes[co]);
-        //         Canvas.SetLeft(rect, j * widthMultiplier);
-        //         Canvas.SetTop(rect, i * heightMultiplier);
-        //         Canvas.Children.Add(rect);
 
-        //     }
-        // }
-        // }
-        editsPending=true;
     }
+    // very similar to the "DrawCanvas" method, but it only updates the grid cells that have changed
     private void UpdateCanvas(int[][] drawData)
     {
-        // if (IsColor){
-        for (int i = 0; i < height; i++)
-        {
-            for (int j = 0; j < width; j++)
-            {
-                Rectangle rect = new Rectangle();
-                rect.Width = widthMultiplier;
-                rect.Height = widthMultiplier;
-                var brush = Brush.Parse(colorCodes[data[i][j]]);
-                Canvas.SetLeft(rect, j * widthMultiplier);
-                Canvas.SetTop(rect, i * heightMultiplier);
-                Canvas.Children.Add(rect);
+        data = drawData;
+        DrawCanvas(data);
 
-            }
-        }
-        // }
-        // else {
-        //     for (int i = 0; i < height; i++)
-        // {
-        //     for (int j = 0; j < width; j++)
-        //     {
-        //         Rectangle rect = new Rectangle();
-        //         rect.Width = widthMultiplier;
-        //         rect.Height = heightMultiplier;
-        //         rect.Fill = drawData[i][j] switch 
-        //         {
-        //             '0' => Brush.Parse(colorCodes[0]),
-        //             '1' => Brush.Parse(colorCodes[1]),
-        //             _ => Brushes.Black
-        //         };
-        //         Canvas.SetLeft(rect, j * widthMultiplier);
-        //         Canvas.SetTop(rect, i * heightMultiplier);
-        //         Canvas.Children.Add(rect);
-
-        //     }
-        // }
-        // }
-        editsPending=true;
     }
     private void LoadFile(string file)
     {
@@ -215,7 +154,7 @@ int heightMultiplier=50, widthMultiplier=50;
 
         sr.Close();
         DrawCanvas(data);
-        editsPending=false;
+        // editsPending=false;
     }
     protected internal void SaveFile(string file)
     {
@@ -225,10 +164,10 @@ int heightMultiplier=50, widthMultiplier=50;
         {
             for (int j = 0; j < width; j++)
             {
-                sw.Write(data[i][j]);
+                sw.Write(Convert.ToString(data[i][j], 16).ToUpper());
             }
         }
         sw.Close();
-        editsPending=false;
+        // editsPending=false;
     }
 }
