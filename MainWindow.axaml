@@ -2,17 +2,25 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="300"
+        mc:Ignorable="d"
+        d:DesignWidth="500"
+        d:DesignHeight="300"
         Background="AliceBlue"
         x:Class="AOP_Homework.MainWindow"
-        x:Name="Main_Window">
-        
-        <StackPanel>
-            <Canvas x:Name="Canvas" PointerPressed="Canvas_PointerPressed" Margin="10" />
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <Button Content="Load File" Click="Load" Background="DimGray" HotKey="Ctrl+o" Padding="10" Margin="0, 10"/>
-                <Button Content="Save File" Click="Save" Background="DimGray" HotKey="Ctrl+s" Padding="10" Margin="0, 10"/>
-            </StackPanel>
-            <ColorPicker x:Name="ColorPicker" HorizontalAlignment="Center" Background="Black" Foreground="FloralWhite" Padding="10"/>
+        x:Name="Main_Window"
+        DataContext="local:ColorPickerViewModel">
+
+    <StackPanel>
+        <Canvas x:Name="Canvas" PointerPressed="Canvas_PointerPressed" Margin="10" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Load File" Click="Load" Background="DimGray" HotKey="Ctrl+o" Padding="10" Margin="0, 10"/>
+            <Button Content="Save File" Click="Save" Background="DimGray" HotKey="Ctrl+s" Padding="10" Margin="0, 10"/>
         </StackPanel>
+        <StackPanel HorizontalAlignment="Center">
+            <ListBox>
+                <ListBoxItem Content=""/>
+            
+            </ListBox>
+        </StackPanel>
+    </StackPanel>
 </Window>

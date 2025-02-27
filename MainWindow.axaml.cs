@@ -14,9 +14,10 @@ namespace AOP_Homework;
 
 public partial class MainWindow : Window
 {
+    private readonly ColorPickerViewModel _viewModel;
     int height;     // Stores the dimensions of the grid (height and width)
     int width;
-    private char[][] data;
+    private int[][] data;
     private bool editsPending = false;
     private string[] colorCodes = {
     "#FFFFFF", // White
@@ -43,6 +44,8 @@ int heightMultiplier=50, widthMultiplier=50;
     public MainWindow()
     {
         InitializeComponent();
+        _viewModel = new ColorPickerViewModel();
+        DataContext = _viewModel;
         Main_Window.Title = "No file opened";
         Canvas.Width = 400;
         Canvas.Height = 300;
@@ -75,7 +78,7 @@ int heightMultiplier=50, widthMultiplier=50;
     }
     private async void Load(object sender, RoutedEventArgs e)
     {
-        var result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        IReadOnlyList<IStorageFile> result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open a b2img.txt file",
             FileTypeFilter = new List<FilePickerFileType>
@@ -109,13 +112,13 @@ int heightMultiplier=50, widthMultiplier=50;
         int y = (int)point.Y / heightMultiplier;
         if (x < width && y < height)
         {
-            data[y][x] = data[y][x] == '0' ? '1' : '0';
+            data[y][x] = data[y][x] != 1 ? 1 : 0;
             UpdateCanvas(data);
         }
     }
-    private void UpdateCanvas(char[][] drawData)
+    private void DrawCanvas(int[][] drawData)
     {
-        if (IsColor){
+        // if (IsColor){
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
@@ -123,55 +126,71 @@ int heightMultiplier=50, widthMultiplier=50;
                 Rectangle rect = new Rectangle();
                 rect.Width = widthMultiplier;
                 rect.Height = widthMultiplier;
-                rect.Fill = drawData[i][j] switch 
-                {
-                    '0' => Brush.Parse(colorCodes[0]),
-                    '1' => Brush.Parse(colorCodes[1]),
-                    '2' => Brush.Parse(colorCodes[2]),
-                    '3' => Brush.Parse(colorCodes[3]),
-                    '4' => Brush.Parse(colorCodes[4]),
-                    '5' => Brush.Parse(colorCodes[5]),
-                    '6' => Brush.Parse(colorCodes[6]),
-                    '7' => Brush.Parse(colorCodes[7]),
-                    '8' => Brush.Parse(colorCodes[8]),
-                    '9' => Brush.Parse(colorCodes[9]),
-                    'A' => Brush.Parse(colorCodes[0xA]),
-                    'B' => Brush.Parse(colorCodes[0xB]),
-                    'C' => Brush.Parse(colorCodes[0xC]),
-                    'D' => Brush.Parse(colorCodes[0xD]),
-                    'E' => Brush.Parse(colorCodes[0xE]),
-                    'F' => Brush.Parse(colorCodes[0xF]),
-                    _ => Brushes.Black
-
-                };
+                rect.Fill = Brush.Parse(colorCodes[drawData[i][j]]);
                 Canvas.SetLeft(rect, j * widthMultiplier);
                 Canvas.SetTop(rect, i * heightMultiplier);
                 Canvas.Children.Add(rect);
 
             }
         }
-        }
-        else {
-            for (int i = 0; i < height; i++)
+        // }
+        // else {
+        //     for (int i = 0; i < height; i++)
+        // {
+        //     for (int j = 0; j < width; j++)
+        //     {
+        //         Rectangle rect = new Rectangle();
+        //         rect.Width = widthMultiplier;
+        //         rect.Height = heightMultiplier;
+        //         rect.Fill = Brush.Parse(colorCodes[co]);
+        //         Canvas.SetLeft(rect, j * widthMultiplier);
+        //         Canvas.SetTop(rect, i * heightMultiplier);
+        //         Canvas.Children.Add(rect);
+
+        //     }
+        // }
+        // }
+        editsPending=true;
+    }
+    private void UpdateCanvas(int[][] drawData)
+    {
+        // if (IsColor){
+        for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
             {
                 Rectangle rect = new Rectangle();
                 rect.Width = widthMultiplier;
-                rect.Height = heightMultiplier;
-                rect.Fill = drawData[i][j] switch 
-                {
-                    '0' => Brush.Parse(colorCodes[0]),
-                    '1' => Brush.Parse(colorCodes[1]),
-                    _ => Brushes.Black
-                };
+                rect.Height = widthMultiplier;
+                var brush = Brush.Parse(colorCodes[data[i][j]]);
                 Canvas.SetLeft(rect, j * widthMultiplier);
                 Canvas.SetTop(rect, i * heightMultiplier);
                 Canvas.Children.Add(rect);
 
             }
         }
-        }
+        // }
+        // else {
+        //     for (int i = 0; i < height; i++)
+        // {
+        //     for (int j = 0; j < width; j++)
+        //     {
+        //         Rectangle rect = new Rectangle();
+        //         rect.Width = widthMultiplier;
+        //         rect.Height = heightMultiplier;
+        //         rect.Fill = drawData[i][j] switch 
+        //         {
+        //             '0' => Brush.Parse(colorCodes[0]),
+        //             '1' => Brush.Parse(colorCodes[1]),
+        //             _ => Brushes.Black
+        //         };
+        //         Canvas.SetLeft(rect, j * widthMultiplier);
+        //         Canvas.SetTop(rect, i * heightMultiplier);
+        //         Canvas.Children.Add(rect);
+
+        //     }
+        // }
+        // }
         editsPending=true;
     }
     private void LoadFile(string file)
@@ -180,21 +199,22 @@ int heightMultiplier=50, widthMultiplier=50;
         string[] line = sr.ReadLine().Split(' ');
         height = int.Parse(line[0]);
         width = int.Parse(line[1]);
-        char[] chardata = sr.ReadToEnd().ToCharArray();
-        data = new char[height][];
+        string chardata = sr.ReadToEnd();
+        data = new int[height][];
         Canvas.Height = height * heightMultiplier;
         Canvas.Width = width * widthMultiplier;
         Canvas.Children.Clear();
         for (int i = 0; i < height; i++)
         {
-            data[i] = new char[width];
+            data[i] = new int[width];
             for (int j = 0; j < width; j++)
             {
-                data[i][j] = chardata[i * width + j];
+                data[i][j] = Convert.ToInt32(chardata[i * width + j].ToString(), 16);
             }
         }
+
         sr.Close();
-        UpdateCanvas(data);
+        DrawCanvas(data);
         editsPending=false;
     }
     protected internal void SaveFile(string file)
