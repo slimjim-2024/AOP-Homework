@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -14,7 +15,6 @@ namespace AOP_Homework;
 
 public partial class MainWindow : Window
 {
-    ListBox listBox;
     private ColorPickerViewModel _viewModel;
     int height; // Stores the dimensions of the grid (height)
     int width;  // Stores the dimensions of the grid (width)
@@ -27,8 +27,11 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
     {
         InitializeComponent();
         _viewModel = new ColorPickerViewModel();
-        listBox = this.Find<ListBox>("ColorList");
+        // comboBox = this.Find<ComboBox>("ColorList");
         DataContext = _viewModel;
+        // comboBox.ItemsSource = _viewModel.CustomColors;
+        // comboBox.SelectedIndex = 3;
+        foreach(var item in ColorList.Items) Debug.WriteLine(item.ToString() + "Gotten FRom the list");
         Main_Window.Title = "No file opened";
         Canvas.Width = 400;
         Canvas.Height = 300;
@@ -44,11 +47,11 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
             {
                 new FilePickerFileType("b2img.txt files")
                 {
-                    Patterns = new[] { "*.b2img.txt", "*.b2img" },   // Add the .b2img extension
+                    Patterns = ["*.b2img.txt", "*.b2img"],   // Add the .b2img extension
                 },
                 new FilePickerFileType("b16img.txt files")
                 {
-                    Patterns = new[]{"*.b16img.txt"}
+                    Patterns = ["*.b16img.txt"]
                 }
             },
             DefaultExtension=".b2img.txt",
@@ -116,7 +119,7 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
                 Rectangle rect = new Rectangle();   // Create a new rectangle to represent a grid cell
                 rect.Width = widthMultiplier;   // Set the width of the rectangle
                 rect.Height = widthMultiplier;  // Set the height of the rectangle
-                rect.Fill = new SolidColorBrush(_viewModel.customColors[drawData[i][j]].Value);    // Set the fill color of the rectangle
+                rect.Fill = new SolidColorBrush(_viewModel.CustomColors[drawData[i][j]].Value);    // Set the fill color of the rectangle
                 Canvas.SetLeft(rect, j * widthMultiplier);
                 Canvas.SetTop(rect, i * heightMultiplier);
                 Canvas.Children.Add(rect); // Add the rectangle to the canvas
@@ -135,7 +138,9 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
     private void LoadFile(string file)
     {
         using StreamReader sr = new StreamReader(file);
-        string[] line = sr.ReadLine().Split(' ');
+        string? resline = sr.ReadLine();
+        if (resline == null)return;
+        string[] line = resline.Split();
         height = int.Parse(line[0]);
         width = int.Parse(line[1]);
         string chardata = sr.ReadToEnd();

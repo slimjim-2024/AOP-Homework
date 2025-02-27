@@ -1,8 +1,10 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 
 namespace AOP_Homework;
@@ -30,21 +32,21 @@ public partial class ColorPickerViewModel : ObservableObject
     "#87CEEB"  // Sky Blue
 ];
 
-    // [ObservableProperty]
-    private ObservableCollection<NamedColor> _customColors;
-
-    public ObservableCollection<NamedColor> customColors
-    {
-        get => _customColors; 
-        set { SetProperty(ref _customColors, value); }
-    }
-    
-    
+    [ObservableProperty]
+    private ObservableCollection<NamedColor> _customColors;    
+    // private ObservableCollection<string> _customColors;    
+        
 
 // public ObservableCollection<Color> CustomPalette { get; set; } = new ObservableCollection<Color>(customColors);
+    // [RelayCommand]
     public ColorPickerViewModel(){
-        customColors = new ObservableCollection<NamedColor> (colorCodes.Select(colorCode => 
-        new NamedColor{Name = colorCode, Value = Color.Parse(colorCode)}));
+        CustomColors = new ObservableCollection<NamedColor> (colorCodes.Select(colorCode =>
+        {
+            Debug.WriteLine("" + colorCode);
+            return new NamedColor{Name = colorCode, Value = Color.Parse(colorCode)};
+        }
+        ).OrderBy(x=> x.Name));
+        // CustomColors = new ObservableCollection<string>(colorCodes);
     }
 
 }
