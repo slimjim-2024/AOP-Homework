@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Runtime.CompilerServices;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
@@ -12,32 +14,63 @@ namespace AOP_Homework;
 
 public partial class MainWindow : Window
 {
-    string? openedFile = "AOP_Hork";
-    int height;
+    int height;     // Stores the dimensions of the grid (height and width)
     int width;
     private char[][] data;
+    private bool editsPending = false;
+    private string[] colorCodes = {
+    "#FFFFFF", // White
+    "#000000", // Black
+    "#FF0000", // Red
+    "#00FFFF", // Cyan
+    "#00FF00", // Green
+    "#FF00FF", // Magenta
+    "#0000FF", // Blue
+    "#FFFF00", // Yellow
+    "#FFA500", // Orange
+    "#008080", // Teal
+    "#800080", // Purple
+    "#00FF00", // Lime
+    "#FFC0CB", // Pink
+    "#000080", // Navy
+    "#A52A2A", // Brown
+    "#87CEEB"  // Sky Blue
+};
+bool IsColor = false;
+int heightMultiplier=50, widthMultiplier=50;
+
 
     public MainWindow()
     {
         InitializeComponent();
         Main_Window.Title = "No file opened";
-        Canvas.Width = 800;
-        Canvas.Height = 600;
+        Canvas.Width = 400;
+        Canvas.Height = 300;
         Canvas.Background = Brushes.White;
     }
-    private void Button_Click(object sender, RoutedEventArgs e)
+    private async void Save(object sender, RoutedEventArgs e)
     {
-        MessageBox.Text = "Hello, Avalonia!";
-    }
-    private void Canvas_PointerPressed(object sender, PointerPressedEventArgs e)
-    {
-        var point = e.GetPosition(Canvas);
-        int x = (int)point.X / 100;
-        int y = (int)point.Y / 100;
-        if (x < width && y < height)
+        var result = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            data[y][x] = data[y][x] == '0' ? '1' : '0';
-            UpdateCanvas(data);
+            Title = "Open a b2img.txt file",
+            FileTypeChoices = new List<FilePickerFileType>
+            {
+                new FilePickerFileType("b2img.txt files")
+                {
+                    Patterns = new[] { "*.b2img.txt", "*.b2img" },
+                }
+            },
+            DefaultExtension=".b2img.txt",
+            SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory),
+            SuggestedFileName = Main_Window.Title,
+            ShowOverwritePrompt = true
+        });
+
+        if (result != null)
+        {
+            var LocalPath = result.Path.AbsolutePath;
+            Main_Window.Title = result.Name;
+            SaveFile(LocalPath.Replace("%20"," "));
         }
     }
     private async void Load(object sender, RoutedEventArgs e)
@@ -49,11 +82,15 @@ public partial class MainWindow : Window
             {
                 new FilePickerFileType("b2img.txt files")
                 {
-                    Patterns = new[] { "*.b2img.txt" }
+                    Patterns = ["*.b2img.txt"]
+                },
+                new FilePickerFileType("b16img.txt color files")
+                {
+                    Patterns = ["*.b16img.txt"]
                 }
             },
             SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory),
-            SuggestedFileName = openedFile,
+            SuggestedFileName = Main_Window.Title,
             AllowMultiple = false
         });
 
@@ -61,30 +98,81 @@ public partial class MainWindow : Window
         {
             var LocalPath = result[0].Path.AbsolutePath;
             Main_Window.Title = result[0].Name;
-            LoadFile(LocalPath);
+            IsColor = result[0].Name.Contains("b16img.txt");
+            LoadFile(LocalPath.Replace("%20"," "));
+        }
+    }
+    private void Canvas_PointerPressed(object sender, PointerPressedEventArgs e)
+    {
+        var point = e.GetPosition(Canvas);
+        int x = (int)point.X / widthMultiplier;
+        int y = (int)point.Y / heightMultiplier;
+        if (x < width && y < height)
+        {
+            data[y][x] = data[y][x] == '0' ? '1' : '0';
+            UpdateCanvas(data);
         }
     }
     private void UpdateCanvas(char[][] drawData)
     {
+        if (IsColor){
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
             {
                 Rectangle rect = new Rectangle();
-                rect.Width = 100;
-                rect.Height = 100;
-                rect.Fill = drawData[i][j] switch
+                rect.Width = widthMultiplier;
+                rect.Height = widthMultiplier;
+                rect.Fill = drawData[i][j] switch 
                 {
-                    '0' => Brushes.White,
-                    '1' => Brushes.Black,
-                    _ => Brushes.Red
+                    '0' => Brush.Parse(colorCodes[0]),
+                    '1' => Brush.Parse(colorCodes[1]),
+                    '2' => Brush.Parse(colorCodes[2]),
+                    '3' => Brush.Parse(colorCodes[3]),
+                    '4' => Brush.Parse(colorCodes[4]),
+                    '5' => Brush.Parse(colorCodes[5]),
+                    '6' => Brush.Parse(colorCodes[6]),
+                    '7' => Brush.Parse(colorCodes[7]),
+                    '8' => Brush.Parse(colorCodes[8]),
+                    '9' => Brush.Parse(colorCodes[9]),
+                    'A' => Brush.Parse(colorCodes[0xA]),
+                    'B' => Brush.Parse(colorCodes[0xB]),
+                    'C' => Brush.Parse(colorCodes[0xC]),
+                    'D' => Brush.Parse(colorCodes[0xD]),
+                    'E' => Brush.Parse(colorCodes[0xE]),
+                    'F' => Brush.Parse(colorCodes[0xF]),
+                    _ => Brushes.Black
+
                 };
-                Canvas.SetLeft(rect, j * 100);
-                Canvas.SetTop(rect, i * 100);
+                Canvas.SetLeft(rect, j * widthMultiplier);
+                Canvas.SetTop(rect, i * heightMultiplier);
                 Canvas.Children.Add(rect);
 
             }
         }
+        }
+        else {
+            for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                Rectangle rect = new Rectangle();
+                rect.Width = widthMultiplier;
+                rect.Height = heightMultiplier;
+                rect.Fill = drawData[i][j] switch 
+                {
+                    '0' => Brush.Parse(colorCodes[0]),
+                    '1' => Brush.Parse(colorCodes[1]),
+                    _ => Brushes.Black
+                };
+                Canvas.SetLeft(rect, j * widthMultiplier);
+                Canvas.SetTop(rect, i * heightMultiplier);
+                Canvas.Children.Add(rect);
+
+            }
+        }
+        }
+        editsPending=true;
     }
     private void LoadFile(string file)
     {
@@ -94,8 +182,8 @@ public partial class MainWindow : Window
         width = int.Parse(line[1]);
         char[] chardata = sr.ReadToEnd().ToCharArray();
         data = new char[height][];
-        Canvas.Height = height * 100;
-        Canvas.Width = width * 100;
+        Canvas.Height = height * heightMultiplier;
+        Canvas.Width = width * widthMultiplier;
         Canvas.Children.Clear();
         for (int i = 0; i < height; i++)
         {
@@ -107,5 +195,20 @@ public partial class MainWindow : Window
         }
         sr.Close();
         UpdateCanvas(data);
+        editsPending=false;
+    }
+    protected internal void SaveFile(string file)
+    {
+        using StreamWriter sw = new StreamWriter(file);
+        sw.WriteLine($"{height} {width}");
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                sw.Write(data[i][j]);
+            }
+        }
+        sw.Close();
+        editsPending=false;
     }
 }
