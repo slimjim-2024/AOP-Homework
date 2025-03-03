@@ -26,7 +26,7 @@ public partial class ColorPickerViewModel : ObservableObject
     "#FFA500", // Orange
     "#008080", // Teal
     "#800080", // Purple
-    "#00FF00", // Lime
+    "#40D61A", // Lime
     "#FFC0CB", // Pink
     "#000080", // Navy
     "#A52A2A", // Brown
