@@ -1,0 +1,46 @@
+!!!In case new code breaks!!!
+
+    protected internal void SaveFile(string file)
+    {
+        string pixels = "";
+        using StreamWriter sw = new StreamWriter(file);
+        sw.WriteLine($"{height} {width}");
+        for (int i = 0; i < height; i++)
+        {
+            for (int j = 0; j < width; j++)
+            {
+                pixels += Convert.ToString(data[i][j], 16).ToUpper();
+            }
+        }
+        sw.Write(pixels);
+        sw.Close();
+        // editsPending=false;
+    }
+
+    private void LoadFile(string file)
+    {
+        using StreamReader sr = new StreamReader(file);
+        string? resline = sr.ReadLine();
+        if (resline == null)return;
+        string[] line = resline.Split();
+        height = int.Parse(line[0]);
+        width = int.Parse(line[1]);
+        string chardata = sr.ReadToEnd();
+        data = new int[height][];
+        Canvas.Height = height * heightMultiplier;
+        Canvas.Width = width * widthMultiplier;
+        Canvas.Children.Clear();
+        for (int i = 0; i < height; i++)
+        {
+            data[i] = new int[width];
+            for (int j = 0; j < width; j++)
+            {
+                data[i][j] = Convert.ToInt32(chardata[i * width + j].ToString(), 16);
+            }
+        }
+
+        sr.Close();
+        DrawCanvas(data);
+        // editsPending=false;
+    }
+    

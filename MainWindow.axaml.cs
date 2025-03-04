@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Avalonia.Controls;
 using Avalonia.Controls.Shapes;
@@ -19,8 +20,8 @@ public partial class MainWindow : Window
     int height; // Stores the dimensions of the grid (height)
     int width;  // Stores the dimensions of the grid (width)
     private int[][] data;    // 2D array to store the grid data (binary or color)
-bool IsColor = false;    // Determines if the file uses a color palette
-int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pixels
+    bool IsColor = false;    // Determines if the file uses a color palette
+    int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pixels
 
 
     public MainWindow()
@@ -136,44 +137,95 @@ int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pix
         DrawCanvas(data);
 
     }
-    private void LoadFile(string file)
+
+    private void LoadFile(string file, bool isBinary = false)
     {
-        using StreamReader sr = new StreamReader(file);
-        string? resline = sr.ReadLine();
-        if (resline == null)return;
-        string[] line = resline.Split();
-        height = int.Parse(line[0]);
-        width = int.Parse(line[1]);
-        string chardata = sr.ReadToEnd();
+        string pixelString = "";
+        if (isBinary)
+        {
+            using BinaryReader br = new BinaryReader(File.Open(file, FileMode.Open));
+            height = br.ReadInt32();
+            width = br.ReadInt32();
+
+            // Gets bytes and turns to string, NEEDS TESTING
+            byte[] pixelBytes = br.ReadBytes(int.MaxValue);
+            foreach (byte b in pixelBytes)
+            {
+                pixelString += Convert.ToString(b, 2);
+            }
+        }
+        else
+        {
+            using StreamReader sr = new StreamReader(file);
+            string resline = sr.ReadToEnd();
+            string[] line = resline.Split();
+            height = int.Parse(line[0]);
+            width = int.Parse(line[1]);
+            pixelString = sr.ReadToEnd();
+        }
+        
+        // Canvas Prep?
         data = new int[height][];
         Canvas.Height = height * heightMultiplier;
         Canvas.Width = width * widthMultiplier;
         Canvas.Children.Clear();
+
         for (int i = 0; i < height; i++)
         {
             data[i] = new int[width];
             for (int j = 0; j < width; j++)
             {
-                data[i][j] = Convert.ToInt32(chardata[i * width + j].ToString(), 16);
+                data[i][j] = Convert.ToInt32(pixelString[i * width + j].ToString(), 16);
             }
         }
 
-        sr.Close();
         DrawCanvas(data);
-        // editsPending=false;
     }
-    protected internal void SaveFile(string file)
+
+    // Need to add save with color?
+    protected internal void SaveFile(string file, bool isBinary = false)
     {
-        using StreamWriter sw = new StreamWriter(file);
-        sw.WriteLine($"{height} {width}");
+        // Gets pixel values as string
+        string pixelString = "";
         for (int i = 0; i < height; i++)
         {
             for (int j = 0; j < width; j++)
             {
-                sw.Write(Convert.ToString(data[i][j], 16).ToUpper());
+                pixelString += Convert.ToString(data[i][j], 16).ToUpper();
             }
         }
-        sw.Close();
-        // editsPending=false;
+
+        // Saving as binary, NEEDS TESTING
+        if (isBinary)
+        {
+            // Adds 0s to complete byte
+            for (int _ = 0; _ < pixelString.Length%8; _++)
+            {
+                pixelString += "0";
+            }
+            // Turns string into bytes
+            byte[] pixelBytes = new byte[pixelString.Length / 8];
+            for (int i = 0; i < pixelBytes.Length; i++)
+            {
+                string byteString = pixelString.Substring(i * 8, 8);
+                pixelBytes[i] = Convert.ToByte(byteString, 2);
+            }
+            // Writes binary file
+            using (BinaryWriter bw = new BinaryWriter(File.Open(file, FileMode.Create)))
+            {
+                bw.Write(height);
+                bw.Write(width);
+                bw.Write(pixelBytes);
+            }
+            return;
+        }
+
+        // Saving not as binary
+        using (StreamWriter sw = new StreamWriter(file))
+        {
+            sw.WriteLine($"{height} {width}");
+            sw.Write(pixelString);
+        }
+        return;
     }
 }
