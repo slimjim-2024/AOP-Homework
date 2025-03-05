@@ -51,6 +51,7 @@ public partial class MainWindow : Window
                 {
                     Patterns = ["*.b2img.txt", "*.b2img"],   // Add the .b2img extension
                 },
+                
                 new FilePickerFileType("b16img.txt files")
                 {
                     Patterns = ["*.b16img.txt"]
@@ -66,7 +67,7 @@ public partial class MainWindow : Window
         {
             var LocalPath = result.Path.AbsolutePath;
             Main_Window.Title = result.Name;
-            SaveFile(LocalPath.Replace("%20"," ")); // Save the file and replacing "%20" with spaces
+            SaveFile(LocalPath.Replace("%20"," "), result.Name.EndsWith(".b2img")); // Save the file and replacing "%20" with spaces
         }
     }
     //open the file
@@ -79,7 +80,11 @@ public partial class MainWindow : Window
             {
                 new FilePickerFileType("b2img.txt files")   //chose the file that stores 2 color data
                 {
-                    Patterns = ["*.b2img.txt"] 
+                    Patterns = ["*.b2img.txt"]
+                },
+                new FilePickerFileType("b2img files")   //chose the file that stores 2 color data in binary
+                {
+                    Patterns = ["*.b2img"]
                 },
                 new FilePickerFileType("b16img.txt color files")    //chose the file that stores 16 color data
                 {
@@ -96,7 +101,7 @@ public partial class MainWindow : Window
             var LocalPath = result[0].Path.AbsolutePath;    // Get the path of the selected file
             Main_Window.Title = result[0].Name; // Set the title of the window to the name of the file
             IsColor = result[0].Name.Contains("b16img.txt");    // Check if the file uses a color palette
-            LoadFile(LocalPath.Replace("%20", " ")); // Load the file and replacing "%20" with spaces
+            LoadFile(LocalPath.Replace("%20", " "), result[0].Name.EndsWith(".b2img")); // Load the file and replacing "%20" with spaces
         }
     }
     private void Canvas_PointerPressed(object sender, PointerPressedEventArgs e)
@@ -106,6 +111,7 @@ public partial class MainWindow : Window
         int y = (int)point.Y / heightMultiplier;    // Calculate grid row
         if (x < width && y < height)
         {
+            // Bug here?
             data[y][x] = data[y][x] == 0 ? ColorList.SelectedIndex : 0;   // Toggle between '0' and '1'
             UpdateCanvas(data);      // Redraw the canvas with updated data
         }
@@ -138,30 +144,36 @@ public partial class MainWindow : Window
 
     }
 
-    private void LoadFile(string file, bool isBinary = false)
+    private void LoadFile(string file, bool isBinary =  false)
     {
         string pixelString = "";
-        if (isBinary)
+        if (isBinary) // TESTED, WORKING!!!
         {
             using BinaryReader br = new BinaryReader(File.Open(file, FileMode.Open));
             height = br.ReadInt32();
             width = br.ReadInt32();
 
-            // Gets bytes and turns to string, NEEDS TESTING
-            byte[] pixelBytes = br.ReadBytes(int.MaxValue);
-            foreach (byte b in pixelBytes)
+            for (int i = 0; i < height*width/8 +1; i++)
             {
-                pixelString += Convert.ToString(b, 2);
+                pixelString += Convert.ToString(br.ReadByte(), 2).PadLeft(8, '0');
             }
+
+            // Removes filler bits
+            pixelString = pixelString[..(height * width)];
+            Console.WriteLine($"{pixelString}");
+
+            br.Close();
         }
         else
         {
             using StreamReader sr = new StreamReader(file);
-            string resline = sr.ReadToEnd();
+            string? resline = sr.ReadLine();
+            if (resline == null)return;
             string[] line = resline.Split();
             height = int.Parse(line[0]);
             width = int.Parse(line[1]);
             pixelString = sr.ReadToEnd();
+            sr.Close();
         }
         
         // Canvas Prep?
@@ -195,10 +207,10 @@ public partial class MainWindow : Window
             }
         }
 
-        // Saving as binary, NEEDS TESTING
+        // Saving as binary, TESTED, WORKS AS FAR AS I CAN TELL
         if (isBinary)
         {
-            // Adds 0s to complete byte
+            // Adds filler bits to complete last byte
             for (int _ = 0; _ < pixelString.Length%8; _++)
             {
                 pixelString += "0";
