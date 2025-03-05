@@ -33,11 +33,12 @@ public partial class MainWindow : Window
         // comboBox.ItemsSource = _viewModel.CustomColors;
         // comboBox.SelectedIndex = 3;
         // ColorList.ItemsSource = new string[] { "a", "s", "d",};
-        foreach(var item in ColorList.Items) Debug.WriteLine(item.ToString() + "Gotten FRom the list");
+        foreach(var item in ColorList.Items) Debug.WriteLine(item.ToString() + "Gotten From the list");
         Main_Window.Title = "No file opened";
         Canvas.Width = 400;
         Canvas.Height = 300;
         Canvas.Background = Brushes.White;
+        ColorList.SelectedIndex = 0;
     }
     //save the file
     private async void Save(object sender, RoutedEventArgs e)
@@ -47,12 +48,15 @@ public partial class MainWindow : Window
             Title = "Open a b2img.txt file",
             FileTypeChoices = new List<FilePickerFileType>
             {
-                new FilePickerFileType("b2img.txt files")
+                new FilePickerFileType("b2img file (*.b2img)")
                 {
-                    Patterns = ["*.b2img.txt", "*.b2img"],   // Add the .b2img extension
+                    Patterns = ["*.b2img"]
                 },
-                
-                new FilePickerFileType("b16img.txt files")
+                new FilePickerFileType("b2img.txt file (*.b2img.txt)")
+                {
+                    Patterns = ["*.b2img.txt"]
+                },
+                new FilePickerFileType("b16img file (*.b16img.txt)")
                 {
                     Patterns = ["*.b16img.txt"]
                 }
@@ -76,84 +80,90 @@ public partial class MainWindow : Window
         IReadOnlyList<IStorageFile> result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open a b2img.txt file",
+            // File type picker
             FileTypeFilter = new List<FilePickerFileType>
             {
-                new FilePickerFileType("b2img.txt files")   //chose the file that stores 2 color data
+                new FilePickerFileType("All supported formats (*.b2img *.b2img.txt *.b16img.txt)")
                 {
-                    Patterns = ["*.b2img.txt"]
+                    Patterns = ["*.b2img", "*.b2img.txt", "*.b16img.txt"]
                 },
-                new FilePickerFileType("b2img files")   //chose the file that stores 2 color data in binary
+                new FilePickerFileType("b2img file (*.b2img)")
                 {
                     Patterns = ["*.b2img"]
                 },
-                new FilePickerFileType("b16img.txt color files")    //chose the file that stores 16 color data
+                new FilePickerFileType("b2img.txt file (*.b2img.txt)")
+                {
+                    Patterns = ["*.b2img.txt"]
+                },
+                new FilePickerFileType("b16img file (*.b16img.txt)")
                 {
                     Patterns = ["*.b16img.txt"]
                 }
             },
             SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory), // Open the file dialog in the current directory
             SuggestedFileName = Main_Window.Title,
-            AllowMultiple = false   // Allow only one file to be selected
+            AllowMultiple = false // Allow only one file to be selected
         });
 
         if (result != null && result.Count > 0) 
         {
-            var LocalPath = result[0].Path.AbsolutePath;    // Get the path of the selected file
+            var LocalPath = result[0].Path.AbsolutePath; // Get the path of the selected file
             Main_Window.Title = result[0].Name; // Set the title of the window to the name of the file
-            IsColor = result[0].Name.Contains("b16img.txt");    // Check if the file uses a color palette
-            LoadFile(LocalPath.Replace("%20", " "), result[0].Name.EndsWith(".b2img")); // Load the file and replacing "%20" with spaces
+            IsColor = result[0].Name.Contains("b16img.txt"); // Check if the file uses a color palette
+            // Load the file and replacing "%20" with spaces, determines whether if the file is in binary depending on the extension
+            LoadFile(LocalPath.Replace("%20", " "), result[0].Name.EndsWith(".b2img"));
         }
     }
+
     private void Canvas_PointerPressed(object sender, PointerPressedEventArgs e)
     {
-        var point = e.GetPosition(Canvas);  // Get the position of the pointer
-        int x = (int)point.X / widthMultiplier;     // Calculate grid columm
-        int y = (int)point.Y / heightMultiplier;    // Calculate grid row
+        var point = e.GetPosition(Canvas); // Get the position of the pointer
+        int x = (int)point.X / widthMultiplier; // Calculate grid columm
+        int y = (int)point.Y / heightMultiplier; // Calculate grid row
         if (x < width && y < height)
         {
-            // Bug here?
-            data[y][x] = data[y][x] == 0 ? ColorList.SelectedIndex : 0;   // Toggle between '0' and '1'
-            UpdateCanvas(data);      // Redraw the canvas with updated data
+            data[y][x] =  ColorList.SelectedIndex; // Changes pixel color
+            UpdateCanvas(data); // Redraw the canvas with updated data
         }
     }
-     // Redraws the grid on the canvas using the stored data
+
+    // Redraws the grid on the canvas using the stored data
     private void DrawCanvas(int[][] drawData)
     {
-        // if (IsColor){
-        for (int i = 0; i < height; i++)    // Loop through each row
+        // if (IsColor) {
+        for (int i = 0; i < height; i++) // Loop through each row
         {
             for (int j = 0; j < width; j++) // Loop through each column
             {
-                Rectangle rect = new Rectangle();   // Create a new rectangle to represent a grid cell
-                rect.Width = widthMultiplier;   // Set the width of the rectangle
-                rect.Height = widthMultiplier;  // Set the height of the rectangle
-                rect.Fill = _viewModel.CustomColors[drawData[i][j]].Value;    // Set the fill color of the rectangle
+                Rectangle rect = new Rectangle(); // Create a new rectangle to represent a grid cell
+                rect.Width = widthMultiplier; // Set the width of the rectangle
+                rect.Height = widthMultiplier; // Set the height of the rectangle
+                rect.Fill = _viewModel.CustomColors[drawData[i][j]].Value; // Set the fill color of the rectangle
                 Canvas.SetLeft(rect, j * widthMultiplier);
                 Canvas.SetTop(rect, i * heightMultiplier);
                 Canvas.Children.Add(rect); // Add the rectangle to the canvas
-
             }
         }
-
     }
-    // very similar to the "DrawCanvas" method, but it only updates the grid cells that have changed
+
+    // Very similar to the "DrawCanvas" method, but it only updates the grid cells that have changed
     private void UpdateCanvas(int[][] drawData)
     {
         data = drawData;
         DrawCanvas(data);
-
     }
 
     private void LoadFile(string file, bool isBinary =  false)
     {
         string pixelString = "";
-        if (isBinary) // TESTED, WORKING!!!
+        if (isBinary)
         {
             using BinaryReader br = new BinaryReader(File.Open(file, FileMode.Open));
             height = br.ReadInt32();
             width = br.ReadInt32();
 
-            for (int i = 0; i < height*width/8 +1; i++)
+            // Converts bytes into binary string
+            for (int i = 0; i < height*width/8 + 1; i++)
             {
                 pixelString += Convert.ToString(br.ReadByte(), 2).PadLeft(8, '0');
             }
@@ -168,7 +178,7 @@ public partial class MainWindow : Window
         {
             using StreamReader sr = new StreamReader(file);
             string? resline = sr.ReadLine();
-            if (resline == null)return;
+            if (resline == null) return;
             string[] line = resline.Split();
             height = int.Parse(line[0]);
             width = int.Parse(line[1]);
@@ -176,7 +186,7 @@ public partial class MainWindow : Window
             sr.Close();
         }
         
-        // Canvas Prep?
+        // Canvas Prep
         data = new int[height][];
         Canvas.Height = height * heightMultiplier;
         Canvas.Width = width * widthMultiplier;
@@ -194,7 +204,6 @@ public partial class MainWindow : Window
         DrawCanvas(data);
     }
 
-    // Need to add save with color?
     protected internal void SaveFile(string file, bool isBinary = false)
     {
         // Gets pixel values as string
@@ -207,7 +216,7 @@ public partial class MainWindow : Window
             }
         }
 
-        // Saving as binary, TESTED, WORKS AS FAR AS I CAN TELL
+        // Saving as binary
         if (isBinary)
         {
             // Adds filler bits to complete last byte
@@ -238,6 +247,5 @@ public partial class MainWindow : Window
             sw.WriteLine($"{height} {width}");
             sw.Write(pixelString);
         }
-        return;
     }
 }

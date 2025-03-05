@@ -24,7 +24,17 @@
          SelectedIndex="1" Margin="0 5" HorizontalAlignment="Center" >
             <ComboBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type local:NamedColor}">
-                    <TextBlock Text="{Binding Name}" Foreground="{Binding Value}"/>
+                    <TextBlock Text="{Binding Name}" Foreground="{Binding Value}">
+                    <!--Added a shadow so light colors are easier to read-->
+                    <TextBlock.Effect>
+                        <DropShadowDirectionEffect
+                        ShadowDepth="4"
+                        Direction="90"
+                        Color="Black"
+                        Opacity="1"
+                        BlurRadius="6"/>
+                    </TextBlock.Effect>
+                    </TextBlock>
                 </DataTemplate>
             </ComboBox.ItemTemplate>
         </ComboBox>
