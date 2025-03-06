@@ -18,10 +18,10 @@ public partial class MainWindow : Window
 {
     private ColorPickerViewModel _viewModel;
     int height; // Stores the dimensions of the grid (height)
-    int width;  // Stores the dimensions of the grid (width)
-    private int[][] data;    // 2D array to store the grid data (binary or color)
-    bool IsColor = false;    // Determines if the file uses a color palette
-    int heightMultiplier=50, widthMultiplier=50;    // Size of each grid cell in pixels
+    int width; // Stores the dimensions of the grid (width)
+    private int[][] data; // 2D array to store the grid data (binary or color)
+    // bool isColor = false; // Made a method to check
+    int heightMultiplier=50, widthMultiplier=50; // Size of each grid cell in pixels
 
 
     public MainWindow()
@@ -33,21 +33,32 @@ public partial class MainWindow : Window
         // comboBox.ItemsSource = _viewModel.CustomColors;
         // comboBox.SelectedIndex = 3;
         // ColorList.ItemsSource = new string[] { "a", "s", "d",};
-        foreach(var item in ColorList.Items) Debug.WriteLine(item.ToString() + "Gotten From the list");
+        foreach (var item in ColorList.Items) Debug.WriteLine(item.ToString() + "Gotten From the list");
         Main_Window.Title = "No file opened";
         Canvas.Width = 400;
         Canvas.Height = 300;
         Canvas.Background = Brushes.White;
         ColorList.SelectedIndex = 0;
     }
-    //save the file
+
+    private bool IsMonochrome(int[][] data)
+    {
+        foreach (var row in data)
+        {
+            if (row.Any(x => x != 0 && x != 1)) return false;
+        }
+        return true;
+    }
+
+    // Save the file
     private async void Save(object sender, RoutedEventArgs e)
     {
         var result = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = "Open a b2img.txt file",
-            FileTypeChoices = new List<FilePickerFileType>
+            Title = "Save a b2img.txt file",
+            FileTypeChoices = IsMonochrome(data) ? new List<FilePickerFileType>
             {
+                // Monochrome file types
                 new FilePickerFileType("b2img file (*.b2img)")
                 {
                     Patterns = ["*.b2img"]
@@ -55,13 +66,16 @@ public partial class MainWindow : Window
                 new FilePickerFileType("b2img.txt file (*.b2img.txt)")
                 {
                     Patterns = ["*.b2img.txt"]
-                },
+                }
+            } : new List<FilePickerFileType>
+            {
+                // Non-monochrome file types
                 new FilePickerFileType("b16img file (*.b16img.txt)")
                 {
                     Patterns = ["*.b16img.txt"]
                 }
             },
-            DefaultExtension=".b2img.txt",
+            DefaultExtension = IsMonochrome(data) ? ".b2img.txt" : ".b16img.txt",
             SuggestedStartLocation = await StorageProvider.TryGetFolderFromPathAsync(Environment.CurrentDirectory),
             SuggestedFileName = Main_Window.Title,
             ShowOverwritePrompt = true  // Show a prompt if the file already exists
@@ -74,7 +88,8 @@ public partial class MainWindow : Window
             SaveFile(LocalPath.Replace("%20"," "), result.Name.EndsWith(".b2img")); // Save the file and replacing "%20" with spaces
         }
     }
-    //open the file
+
+    // Open the file
     private async void Load(object sender, RoutedEventArgs e)
     {
         IReadOnlyList<IStorageFile> result = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
@@ -107,10 +122,11 @@ public partial class MainWindow : Window
 
         if (result != null && result.Count > 0) 
         {
-            var LocalPath = result[0].Path.AbsolutePath; // Get the path of the selected file
-            Main_Window.Title = result[0].Name; // Set the title of the window to the name of the file
-            IsColor = result[0].Name.Contains("b16img.txt"); // Check if the file uses a color palette
-            // Load the file and replacing "%20" with spaces, determines whether if the file is in binary depending on the extension
+            // Get the path of the selected file
+            var LocalPath = result[0].Path.AbsolutePath;
+            // Set the title of the window to the name of the file, removes extensions from name
+            Main_Window.Title = result[0].Name.Replace(".txt", "").Replace(".b2img", "").Replace(".b16img", "");
+            // Load the file and replacing "%20" with spaces, determines whether the file is in binary depending on the extension
             LoadFile(LocalPath.Replace("%20", " "), result[0].Name.EndsWith(".b2img"));
         }
     }
