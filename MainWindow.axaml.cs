@@ -53,6 +53,10 @@ public partial class MainWindow : Window
     // Save the file
     private async void Save(object sender, RoutedEventArgs e)
     {
+        if (data == null)
+        {
+            return;
+        }
         var result = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save a b2img.txt file",
